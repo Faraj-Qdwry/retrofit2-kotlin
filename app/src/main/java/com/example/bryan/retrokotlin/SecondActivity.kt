@@ -23,24 +23,26 @@ class SecondActivity : AppCompatActivity() {
                 })
     }
 
-    private  val secondAdapter : RecyclerViewAdapter_SecondActivity by lazy { RecyclerViewAdapter_SecondActivity() }
+    //Member Fields
 
-    private var userLogin = ""
 
-    private val call : Call<ArrayList<Repo>> by lazy { API_Interface.create().getUserRepos(userLogin) }
+    private val adapter = RecyclerViewAdapter_SecondActivity()
+    private val apI_Interface by lazy { API_Interface.create() }
+    private lateinit var call: Call<ArrayList<Repo>>
+    //endregion
 
+    //lifecycle Methods
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
 
-
-        text_name.text = with(intent) {
-            Glide.with(this@SecondActivity).load(getStringExtra("PICLINK")).into(profile_pic)
-            userLogin = getStringExtra("USERLOGIN")
-            userLogin
+        with(intent.getStringExtra("USERLOGIN")) {
+            text_name.text = this
+            call = apI_Interface.getUserRepos(this)
+            call.enqueue(callback)
         }
 
-        call.enqueue(callback)
+        Glide.with(this@SecondActivity).load(intent.getStringExtra("PICLINK")).into(profile_pic)
 
         findViewById<RecyclerView>(R.id.recyclerview_2).setUp()
 
@@ -50,24 +52,27 @@ class SecondActivity : AppCompatActivity() {
         super.onDestroy()
         call.cancel()
     }
+    //endregion
 
-    private val callback : Callback<ArrayList<Repo>> = object : Callback<ArrayList<Repo>> {
-            override fun onFailure(call: Call<ArrayList<Repo>>?, t: Throwable?) {
-                Log.d("Failure", "secondsActivity Callbake Failure")
-            }
+    //Private Methods
+    private val callback: Callback<ArrayList<Repo>> = object : Callback<ArrayList<Repo>> {
+        override fun onFailure(call: Call<ArrayList<Repo>>?, t: Throwable?) {
+            Log.d("Failure", "secondsActivity Callbake Failure")
+        }
 
-            override fun onResponse(call: Call<ArrayList<Repo>>?, response: Response<ArrayList<Repo>>?) {
-                with(secondAdapter){
-                    addData(response?.body()!!)
-                    notifyDataSetChanged()
-                }
+        override fun onResponse(call: Call<ArrayList<Repo>>?, response: Response<ArrayList<Repo>>?) {
+            with(adapter) {
+                addData(response?.body()!!)
+                notifyDataSetChanged()
             }
+        }
     }
 
     private fun RecyclerView.setUp() {
         layoutManager = LinearLayoutManager(this@SecondActivity, LinearLayoutManager.VERTICAL, false)
-        this.adapter =  secondAdapter
+        this.adapter = this@SecondActivity.adapter
     }
+    //endregion
 }
 
 
